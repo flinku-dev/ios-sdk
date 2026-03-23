@@ -13,3 +13,4 @@ DerivedData/
 
 # Optional: uncomment if you prefer not to lock resolved versions in-repo
 # Package.resolved
+.build/
