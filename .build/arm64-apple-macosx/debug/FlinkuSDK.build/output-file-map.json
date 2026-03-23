@@ -1,0 +1,47 @@
+{
+  "": {
+    "swift-dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/master.swiftdeps"
+  },
+  "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/Sources/FlinkuSDK/Flinku.swift": {
+    "dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/Flinku.d",
+    "object": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/Flinku.swift.o",
+    "swiftmodule": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/Flinku~partial.swiftmodule",
+    "swift-dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/Flinku.swiftdeps",
+    "diagnostics": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/Flinku.dia"
+  },
+  "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/Sources/FlinkuSDK/FlinkuConfig.swift": {
+    "dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuConfig.d",
+    "object": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuConfig.swift.o",
+    "swiftmodule": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuConfig~partial.swiftmodule",
+    "swift-dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuConfig.swiftdeps",
+    "diagnostics": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuConfig.dia"
+  },
+  "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/Sources/FlinkuSDK/FlinkuHTTP.swift": {
+    "dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuHTTP.d",
+    "object": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuHTTP.swift.o",
+    "swiftmodule": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuHTTP~partial.swiftmodule",
+    "swift-dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuHTTP.swiftdeps",
+    "diagnostics": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuHTTP.dia"
+  },
+  "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/Sources/FlinkuSDK/FlinkuLink.swift": {
+    "dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuLink.d",
+    "object": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuLink.swift.o",
+    "swiftmodule": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuLink~partial.swiftmodule",
+    "swift-dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuLink.swiftdeps",
+    "diagnostics": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuLink.dia"
+  },
+  "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/Sources/FlinkuSDK/FlinkuLogger.swift": {
+    "dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuLogger.d",
+    "object": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuLogger.swift.o",
+    "swiftmodule": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuLogger~partial.swiftmodule",
+    "swift-dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuLogger.swiftdeps",
+    "diagnostics": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuLogger.dia"
+  },
+  "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/Sources/FlinkuSDK/FlinkuStorage.swift": {
+    "dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuStorage.d",
+    "object": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuStorage.swift.o",
+    "swiftmodule": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuStorage~partial.swiftmodule",
+    "swift-dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuStorage.swiftdeps",
+    "diagnostics": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/FlinkuStorage.dia"
+  }
+}

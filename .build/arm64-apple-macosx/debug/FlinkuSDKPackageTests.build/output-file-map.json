@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDKPackageTests.build/master.swiftdeps"
+  },
+  "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDKPackageTests.derived/runner.swift": {
+    "dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDKPackageTests.build/runner.d",
+    "object": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDKPackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDKPackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDKPackageTests.build/runner.swiftdeps",
+    "diagnostics": "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDKPackageTests.build/runner.dia"
+  }
+}

@@ -1,0 +1,3 @@
+module FlinkuSDK {
+    header "/Users/lukmanalhabsi/Desktop/apps/flinku.dev/flinku-ios-sdk/.build/arm64-apple-macosx/debug/FlinkuSDK.build/include/FlinkuSDK-Swift.h"
+}
