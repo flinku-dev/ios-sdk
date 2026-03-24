@@ -1,64 +1,96 @@
-# FlinkuSDK for iOS
+# FlinkuSDK
 
-Native Swift SDK for Flinku deep linking. Supports iOS 14+.
+Official iOS SDK for [Flinku](https://flinku.dev) — deferred deep linking for iOS. The modern replacement for Firebase Dynamic Links.
+
+**Version 0.2.0**
 
 ## Installation
 
 ### Swift Package Manager
-In Xcode: File → Add Package Dependencies
+
+In Xcode → File → Add Package Dependencies:
+
 ```
-https://github.com/flinku/flinku-ios-sdk
-```
-
-## Usage
-
-### AppDelegate
-```swift
-import FlinkuSDK
-
-func application(_ application: UIApplication,
-  didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-
-  Flinku.configure(FlinkuConfig(
-    apiKey: "fku_live_your_key",
-    debugMode: true
-  ))
-
-  return true
-}
+https://github.com/flinku-dev/ios-sdk
 ```
 
-### SwiftUI App
+## Setup
+
+Configure in your `AppDelegate` or `@main` App struct:
+
 ```swift
 import FlinkuSDK
 
 @main
 struct MyApp: App {
-  init() {
-    Flinku.configure(FlinkuConfig(
-      apiKey: "fku_live_your_key",
-      debugMode: true
-    ))
-  }
+    init() {
+        Flinku.configure(baseUrl: "https://yourapp.flku.dev")
+    }
 
-  var body: some Scene {
-    WindowGroup {
-      ContentView()
-        .task {
-          let link = await Flinku.match()
-          if link.matched {
-            // Navigate to link.deepLink
-          }
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
         }
     }
-  }
 }
 ```
 
-## How It Works
-1. User clicks a Flinku short link
-2. Server records device fingerprint
-3. User installs app
-4. SDK calls match() on first launch
-5. Server matches fingerprint → returns deep link
-6. App navigates to correct screen
+## Handle deep links
+
+Call `Flinku.match()` on app launch:
+
+```swift
+struct SplashView: View {
+    var body: some View {
+        ProgressView()
+            .task {
+                let link = await Flinku.match()
+                if link.matched {
+                    // Navigate to the correct screen
+                    NavigationState.shared.deepLink = link.deepLink
+                }
+            }
+    }
+}
+```
+
+## With authentication flow
+
+```swift
+let link = await Flinku.match()
+
+// After login completes
+if link.matched {
+    router.navigate(to: link.deepLink!)
+} else {
+    router.navigate(to: "/home")
+}
+```
+
+## Query parameters
+
+```swift
+let link = await Flinku.match()
+
+if link.matched, let params = link.params {
+    let ref = params["ref"] as? String       // e.g. "instagram"
+    let promo = params["promo"] as? String   // e.g. "SAVE20"
+}
+```
+
+## Xcode configuration
+
+1. Open Xcode → your target → **Signing & Capabilities**
+2. Click **+ Capability** → **Associated Domains**
+3. Add: `applinks:yourapp.flku.dev`
+
+## Reset (testing only)
+
+```swift
+Flinku.reset()
+```
+
+## Requirements
+
+- iOS 14+
+- Swift 5.9+

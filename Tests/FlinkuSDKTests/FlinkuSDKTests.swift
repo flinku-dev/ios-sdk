@@ -5,17 +5,22 @@ final class FlinkuSDKTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        Flinku.resetForTesting()
+        Flinku.reset()
     }
 
     func testConfigureSDK() {
-        let config = FlinkuConfig(apiKey: "test_key", debugMode: true)
-        Flinku.configure(config)
-        XCTAssertNotNil(config)
+        Flinku.configure(baseUrl: "https://yourapp.flku.dev", debug: true)
+        let config = FlinkuConfig(baseUrl: "https://yourapp.flku.dev", debug: true)
+        XCTAssertEqual(config.subdomain, "yourapp")
     }
 
-    func testFlinkuLinkNoMatch() {
-        let link = FlinkuLink.noMatch
+    func testSubdomainFromBaseUrl() {
+        let config = FlinkuConfig(baseUrl: "https://yourapp.flku.dev")
+        XCTAssertEqual(config.subdomain, "yourapp")
+    }
+
+    func testFlinkuLinkNotMatched() {
+        let link = FlinkuLink.notMatched
         XCTAssertFalse(link.matched)
         XCTAssertNil(link.deepLink)
         XCTAssertNil(link.slug)
@@ -26,19 +31,25 @@ final class FlinkuSDKTests: XCTestCase {
             "matched": true,
             "deepLink": "myapp://product/42",
             "slug": "abc123",
-            "params": ["id": "42"]
+            "subdomain": "yourapp",
+            "title": "Product",
+            "params": ["id": "42"],
+            "projectId": "proj_1",
         ]
         let link = FlinkuLink.from(json: json)
         XCTAssertTrue(link.matched)
         XCTAssertEqual(link.deepLink, "myapp://product/42")
         XCTAssertEqual(link.slug, "abc123")
+        XCTAssertEqual(link.subdomain, "yourapp")
+        XCTAssertEqual(link.title, "Product")
+        XCTAssertEqual(link.projectId, "proj_1")
     }
 
-    func testStorageReset() {
-        FlinkuStorage.hasMatched = true
-        FlinkuStorage.hasLaunched = true
-        FlinkuStorage.reset()
-        XCTAssertFalse(FlinkuStorage.hasMatched)
-        XCTAssertFalse(FlinkuStorage.hasLaunched)
+    func testResetClearsMatchState() {
+        UserDefaults.standard.set(true, forKey: "flinku_matched")
+        UserDefaults.standard.set(Data(), forKey: "flinku_match_result")
+        Flinku.reset()
+        XCTAssertFalse(UserDefaults.standard.bool(forKey: "flinku_matched"))
+        XCTAssertNil(UserDefaults.standard.data(forKey: "flinku_match_result"))
     }
 }

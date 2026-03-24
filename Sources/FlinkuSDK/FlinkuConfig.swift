@@ -1,20 +1,26 @@
 import Foundation
 
 public struct FlinkuConfig {
-    public let apiKey: String
-    public let baseURL: String
-    public let debugMode: Bool
-    public let matchTimeout: TimeInterval
+    public let baseUrl: String
+    public let debug: Bool
+    public let timeout: TimeInterval
 
     public init(
-        apiKey: String,
-        baseURL: String = "http://159.65.159.159:3001",
-        debugMode: Bool = false,
-        matchTimeout: TimeInterval = 10.0
+        baseUrl: String,
+        debug: Bool = false,
+        timeout: TimeInterval = 5.0
     ) {
-        self.apiKey = apiKey
-        self.baseURL = baseURL
-        self.debugMode = debugMode
-        self.matchTimeout = matchTimeout
+        self.baseUrl = baseUrl
+        self.debug = debug
+        self.timeout = timeout
+    }
+
+    /// Extracts subdomain from baseUrl
+    /// e.g. https://yourapp.flku.dev → yourapp
+    public var subdomain: String {
+        guard let host = URL(string: baseUrl)?.host else { return "" }
+        let parts = host.split(separator: ".")
+        if parts.count >= 3 { return String(parts.first ?? "") }
+        return host
     }
 }

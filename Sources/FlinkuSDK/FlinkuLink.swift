@@ -3,25 +3,40 @@ import Foundation
 public struct FlinkuLink {
     public let matched: Bool
     public let deepLink: String?
-    public let params: [String: Any]?
     public let slug: String?
+    public let subdomain: String?
+    public let title: String?
+    public let params: [String: Any]?
+    public let clickedAt: Date?
+    public let projectId: String?
 
-    public static var noMatch: FlinkuLink {
-        FlinkuLink(matched: false, deepLink: nil, params: nil, slug: nil)
-    }
-
-    init(matched: Bool, deepLink: String?, params: [String: Any]?, slug: String?) {
-        self.matched = matched
-        self.deepLink = deepLink
-        self.params = params
-        self.slug = slug
-    }
+    public static let notMatched = FlinkuLink(
+        matched: false,
+        deepLink: nil,
+        slug: nil,
+        subdomain: nil,
+        title: nil,
+        params: nil,
+        clickedAt: nil,
+        projectId: nil
+    )
 
     static func from(json: [String: Any]) -> FlinkuLink {
         let matched = json["matched"] as? Bool ?? false
-        let deepLink = json["deepLink"] as? String
-        let params = json["params"] as? [String: Any]
-        let slug = json["slug"] as? String
-        return FlinkuLink(matched: matched, deepLink: deepLink, params: params, slug: slug)
+        var clickedAt: Date? = nil
+        if let clickedAtStr = json["clickedAt"] as? String {
+            let formatter = ISO8601DateFormatter()
+            clickedAt = formatter.date(from: clickedAtStr)
+        }
+        return FlinkuLink(
+            matched: matched,
+            deepLink: json["deepLink"] as? String,
+            slug: json["slug"] as? String,
+            subdomain: json["subdomain"] as? String,
+            title: json["title"] as? String,
+            params: json["params"] as? [String: Any],
+            clickedAt: clickedAt,
+            projectId: json["projectId"] as? String
+        )
     }
 }
