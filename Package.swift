@@ -1,4 +1,5 @@
 // swift-tools-version: 5.9
+// FlinkuSDK 0.3.0
 import PackageDescription
 
 let package = Package(

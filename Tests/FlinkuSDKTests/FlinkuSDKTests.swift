@@ -19,6 +19,36 @@ final class FlinkuSDKTests: XCTestCase {
         XCTAssertEqual(config.subdomain, "yourapp")
     }
 
+    func testApiBaseUrlStripsSubdomain() {
+        let config = FlinkuConfig(baseUrl: "https://myapp.flku.dev")
+        XCTAssertEqual(config.apiBaseUrl, "https://flku.dev")
+    }
+
+    func testLinkOptionsToDict() {
+        var opts = FlinkuLinkOptions(title: "Hello")
+        opts.deepLink = "myapp://x"
+        opts.params = ["a": "b"]
+        let d = opts.toDict()
+        XCTAssertEqual(d["title"] as? String, "Hello")
+        XCTAssertEqual(d["deepLink"] as? String, "myapp://x")
+        XCTAssertEqual((d["params"] as? [String: String])?["a"], "b")
+    }
+
+    func testFlinkuCreatedLinkFromJSON() {
+        let json: [String: Any] = [
+            "id": "1",
+            "slug": "abc",
+            "shortUrl": "https://flku.dev/abc",
+            "deepLink": "myapp://x",
+            "params": ["k": "v"],
+        ]
+        let link = FlinkuCreatedLink.from(json: json)
+        XCTAssertEqual(link?.id, "1")
+        XCTAssertEqual(link?.slug, "abc")
+        XCTAssertEqual(link?.shortUrl, "https://flku.dev/abc")
+        XCTAssertEqual(link?.params?["k"], "v")
+    }
+
     func testFlinkuLinkNotMatched() {
         let link = FlinkuLink.notMatched
         XCTAssertFalse(link.matched)
