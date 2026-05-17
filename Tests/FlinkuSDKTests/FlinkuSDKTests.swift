@@ -65,6 +65,7 @@ final class FlinkuSDKTests: XCTestCase {
             "title": "Product",
             "params": ["id": "42"],
             "projectId": "proj_1",
+            "matchType": "fingerprint",
         ]
         let link = FlinkuLink.from(json: json)
         XCTAssertTrue(link.matched)
@@ -73,6 +74,7 @@ final class FlinkuSDKTests: XCTestCase {
         XCTAssertEqual(link.subdomain, "yourapp")
         XCTAssertEqual(link.title, "Product")
         XCTAssertEqual(link.projectId, "proj_1")
+        XCTAssertEqual(link.matchType, "fingerprint")
     }
 
     func testResetClearsMatchState() {

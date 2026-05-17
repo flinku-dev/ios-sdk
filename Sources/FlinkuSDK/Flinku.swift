@@ -1,4 +1,7 @@
 import Foundation
+#if os(iOS)
+import UIKit
+#endif
 
 public class Flinku {
     private init() {}
@@ -40,23 +43,36 @@ public class Flinku {
             return .notMatched
         }
 
+        #if os(iOS)
+        let clipText = UIPasteboard.general.string ?? ""
+        #else
+        let clipText = ""
+        #endif
+
         let result = await FlinkuHTTP.match(config: config)
 
-        if result.matched {
-            UserDefaults.standard.set(true, forKey: matchedKey)
-            if let json = try? JSONSerialization.data(withJSONObject: [
-                "matched": true,
-                "deepLink": result.deepLink ?? "",
-                "slug": result.slug ?? "",
-                "subdomain": result.subdomain ?? "",
-                "title": result.title ?? "",
-                "params": result.params ?? [:],
-                "projectId": result.projectId ?? "",
-            ]) {
-                UserDefaults.standard.set(json, forKey: matchResultKey)
+        if !result.matched {
+            let baseUrl = config.baseUrl
+            if !clipText.isEmpty && (clipText.contains(".flku.dev") || clipText.contains(baseUrl)) {
+                #if os(iOS)
+                UIPasteboard.general.string = ""
+                #endif
+                if let clipResult = await matchWithClipboardUrl(clipText) {
+                    persistMatchResult(clipResult)
+                    return clipResult
+                }
             }
+        } else {
+            persistMatchResult(result)
         }
+
         return result
+    }
+
+    /// Match using a Flinku URL from the clipboard. Returns a link when matched, otherwise `nil`.
+    static func matchWithClipboardUrl(_ url: String) async -> FlinkuLink? {
+        guard let config = config else { return nil }
+        return await FlinkuHTTP.matchWithClipboardUrl(url, config: config)
     }
 
     /// Create a short link. Requires `apiKey` in `configure`.
@@ -176,5 +192,22 @@ public class Flinku {
     public static func reset() {
         UserDefaults.standard.removeObject(forKey: matchedKey)
         UserDefaults.standard.removeObject(forKey: matchResultKey)
+    }
+
+    private static func persistMatchResult(_ result: FlinkuLink) {
+        guard result.matched else { return }
+        UserDefaults.standard.set(true, forKey: matchedKey)
+        if let json = try? JSONSerialization.data(withJSONObject: [
+            "matched": true,
+            "deepLink": result.deepLink ?? "",
+            "slug": result.slug ?? "",
+            "subdomain": result.subdomain ?? "",
+            "title": result.title ?? "",
+            "params": result.params ?? [:],
+            "projectId": result.projectId ?? "",
+            "matchType": result.matchType ?? "",
+        ]) {
+            UserDefaults.standard.set(json, forKey: matchResultKey)
+        }
     }
 }

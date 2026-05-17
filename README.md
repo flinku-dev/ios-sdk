@@ -2,7 +2,7 @@
 
 Official iOS SDK for [Flinku](https://flinku.dev) — deferred deep linking for iOS. The modern replacement for Firebase Dynamic Links.
 
-**Version 0.3.0**
+**Version 0.3.1**
 
 ## Installation
 

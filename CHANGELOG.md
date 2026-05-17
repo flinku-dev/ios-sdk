@@ -1,3 +1,9 @@
+## 0.3.1
+
+* Clipboard-based deferred deep linking fallback when fingerprint match fails
+* Added `matchWithClipboardUrl(_:)` (`POST /api/match` with `clipboardUrl`)
+* Added `matchType` to `FlinkuLink`
+
 ## 0.3.0
 
 * Added `FlinkuLinkOptions` and `FlinkuCreatedLink` for programmatic link creation

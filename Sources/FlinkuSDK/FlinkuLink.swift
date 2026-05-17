@@ -9,6 +9,7 @@ public struct FlinkuLink {
     public let params: [String: Any]?
     public let clickedAt: Date?
     public let projectId: String?
+    public let matchType: String?
 
     public static let notMatched = FlinkuLink(
         matched: false,
@@ -18,7 +19,8 @@ public struct FlinkuLink {
         title: nil,
         params: nil,
         clickedAt: nil,
-        projectId: nil
+        projectId: nil,
+        matchType: nil
     )
 
     static func from(json: [String: Any]) -> FlinkuLink {
@@ -36,7 +38,8 @@ public struct FlinkuLink {
             title: json["title"] as? String,
             params: json["params"] as? [String: Any],
             clickedAt: clickedAt,
-            projectId: json["projectId"] as? String
+            projectId: json["projectId"] as? String,
+            matchType: json["matchType"] as? String
         )
     }
 }

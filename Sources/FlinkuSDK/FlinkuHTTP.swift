@@ -42,4 +42,35 @@ enum FlinkuHTTP {
         }
         return .notMatched
     }
+
+    static func matchWithClipboardUrl(_ url: String, config: FlinkuConfig) async -> FlinkuLink? {
+        let body: [String: Any] = [
+            "subdomain": config.subdomain,
+            "clipboardUrl": url,
+        ]
+
+        do {
+            guard let requestUrl = URL(string: "\(config.baseUrl)/api/match") else {
+                return nil
+            }
+            var request = URLRequest(url: requestUrl)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            request.timeoutInterval = config.timeout
+
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                return nil
+            }
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                return nil
+            }
+            let link = FlinkuLink.from(json: json)
+            return link.matched ? link : nil
+        } catch {
+            return nil
+        }
+    }
 }
