@@ -120,6 +120,30 @@ public class Flinku {
         }.resume()
     }
 
+    /// Create a short link optimistically: returns immediately with a locally
+    /// generated slug and short URL, then registers the link on the server in
+    /// the background. Requires `apiKey` in `configure`.
+    public static func createLinkInstant(_ options: FlinkuLinkOptions) throws -> FlinkuCreatedLink {
+        guard let config = config else {
+            throw FlinkuError.notConfigured
+        }
+        guard config.apiKey != nil else {
+            throw FlinkuError.missingApiKey
+        }
+
+        let slug = generateInstantSlug(from: options.title)
+        let shortUrl = "https://\(config.subdomain).flku.dev/\(slug)"
+        createLinkInstantInBackground(options: options, slug: slug, config: config)
+
+        return FlinkuCreatedLink(
+            id: "",
+            slug: slug,
+            shortUrl: shortUrl,
+            deepLink: options.deepLink,
+            params: options.params
+        )
+    }
+
     /// Create multiple short links in one request. Requires `apiKey` in `configure`.
     /// Sends `POST` to `/api/links/batch` with body `{"links":[...]}` and expects `{"links":[...]}` (or a top-level JSON array) in the response.
     public static func createLinks(_ options: [FlinkuLinkOptions], completion: @escaping (Result<[FlinkuCreatedLink], Error>) -> Void) {
@@ -192,6 +216,52 @@ public class Flinku {
     public static func reset() {
         UserDefaults.standard.removeObject(forKey: matchedKey)
         UserDefaults.standard.removeObject(forKey: matchResultKey)
+    }
+
+    private static func generateInstantSlug(from title: String) -> String {
+        var base = title.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        base = base.replacingOccurrences(of: "[^a-z0-9\\s-]", with: "", options: .regularExpression)
+        base = base.replacingOccurrences(of: "\\s+", with: "-", options: .regularExpression)
+        base = base.replacingOccurrences(of: "-+", with: "-", options: .regularExpression)
+        base = base.trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+        if base.isEmpty {
+            base = "link"
+        }
+        let chars = Array("abcdefghijklmnopqrstuvwxyz0123456789")
+        let suffix = String((0..<4).compactMap { _ in chars.randomElement() })
+        return "\(base)-\(suffix)"
+    }
+
+    private static func createLinkInstantInBackground(
+        options: FlinkuLinkOptions,
+        slug: String,
+        config: FlinkuConfig
+    ) {
+        guard let apiKey = config.apiKey,
+              let url = URL(string: "\(config.apiBaseUrl)/api/links") else {
+            return
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = config.timeout
+        var payload = options.toDict()
+        payload["slug"] = slug
+        guard let body = try? JSONSerialization.data(withJSONObject: payload) else {
+            return
+        }
+        request.httpBody = body
+
+        URLSession.shared.dataTask(with: request) { _, response, error in
+            if error != nil {
+                return
+            }
+            if let httpResponse = response as? HTTPURLResponse,
+               !(200...299).contains(httpResponse.statusCode) {
+                return
+            }
+        }.resume()
     }
 
     private static func persistMatchResult(_ result: FlinkuLink) {

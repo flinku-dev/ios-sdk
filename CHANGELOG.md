@@ -1,3 +1,5 @@
+## 0.3.1 - Add createLinkInstant for instant link creation without waiting for server
+
 ## 0.3.1
 
 * Clipboard-based deferred deep linking fallback when fingerprint match fails
