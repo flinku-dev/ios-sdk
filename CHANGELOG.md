@@ -1,3 +1,5 @@
+## 0.3.2 - Add readClipboard option to configure(); clipboard read now happens after server match
+
 ## 0.3.1 - Add createLinkInstant for instant link creation without waiting for server
 
 ## 0.3.1

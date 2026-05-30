@@ -5,17 +5,20 @@ public struct FlinkuConfig {
     public let apiKey: String?
     public let debug: Bool
     public let timeout: TimeInterval
+    public let readClipboard: Bool
 
     public init(
         baseUrl: String,
         apiKey: String? = nil,
         debug: Bool = false,
-        timeout: TimeInterval = 5.0
+        timeout: TimeInterval = 5.0,
+        readClipboard: Bool = true
     ) {
         self.baseUrl = baseUrl
         self.apiKey = apiKey
         self.debug = debug
         self.timeout = timeout
+        self.readClipboard = readClipboard
     }
 
     /// Extracts subdomain from baseUrl

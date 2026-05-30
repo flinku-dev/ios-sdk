@@ -17,8 +17,8 @@ public class Flinku {
     /// ```swift
     /// Flinku.configure(baseUrl: "https://yourapp.flku.dev")
     /// ```
-    public static func configure(baseUrl: String, apiKey: String? = nil, debug: Bool = false, timeout: TimeInterval = 5.0) {
-        config = FlinkuConfig(baseUrl: baseUrl, apiKey: apiKey, debug: debug, timeout: timeout)
+    public static func configure(baseUrl: String, apiKey: String? = nil, debug: Bool = false, timeout: TimeInterval = 5.0, readClipboard: Bool = true) {
+        config = FlinkuConfig(baseUrl: baseUrl, apiKey: apiKey, debug: debug, timeout: timeout, readClipboard: readClipboard)
     }
 
     /// Returns true if match() has already found a match.
@@ -43,15 +43,20 @@ public class Flinku {
             return .notMatched
         }
 
-        #if os(iOS)
-        let clipText = UIPasteboard.general.string ?? ""
-        #else
-        let clipText = ""
-        #endif
-
         let result = await FlinkuHTTP.match(config: config)
 
         if !result.matched {
+            // Only read clipboard if server match failed AND readClipboard is enabled.
+            // This prevents the iOS "paste permission" dialog on every install
+            // when Universal Links handle attribution instead.
+            guard config.readClipboard else {
+                return result
+            }
+            #if os(iOS)
+            let clipText = UIPasteboard.general.string ?? ""
+            #else
+            let clipText = ""
+            #endif
             let baseUrl = config.baseUrl
             if !clipText.isEmpty && (clipText.contains(".flku.dev") || clipText.contains(baseUrl)) {
                 #if os(iOS)
