@@ -2,7 +2,7 @@
 
 Official iOS SDK for [Flinku](https://flinku.dev) — deferred deep linking for iOS. The modern replacement for Firebase Dynamic Links.
 
-**Version 0.3.1**
+**Version 0.3.3**
 
 ## Installation
 
@@ -26,7 +26,7 @@ struct MyApp: App {
     init() {
         Flinku.configure(
             baseUrl: "https://yourapp.flku.dev",
-            apiKey: "fku_live_your_key" // optional; required for createLink / createLinks
+            apiKey: "flk_pk_..." // optional; required for createLink / createLinks
         )
     }
 
@@ -88,6 +88,8 @@ if link.matched, let params = link.params {
 3. Add: `applinks:yourapp.flku.dev`
 
 ## Create links (API key)
+
+Use your publishable key (`flk_pk_`) in apps. Never embed your secret key (`flk_live_`).
 
 Configure with an API key, then create short links:
 

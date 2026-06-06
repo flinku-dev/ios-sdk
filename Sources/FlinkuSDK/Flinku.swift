@@ -7,18 +7,37 @@ public class Flinku {
     private init() {}
 
     private static var config: FlinkuConfig?
+    private static var secretKeyWarningShown = false
     private static let matchedKey = "flinku_matched"
     private static let matchResultKey = "flinku_match_result"
 
     /// Configure Flinku with your project subdomain URL.
     /// Call once in AppDelegate or App struct before any match() call.
     ///
+    /// [apiKey] accepts publishable keys (`flk_pk_`) or secret keys (`flk_live_`).
+    /// Use your publishable key (`flk_pk_`) in apps. Never embed your secret key (`flk_live_`).
+    ///
     /// Example:
     /// ```swift
-    /// Flinku.configure(baseUrl: "https://yourapp.flku.dev")
+    /// Flinku.configure(
+    ///     baseUrl: "https://yourapp.flku.dev",
+    ///     apiKey: "flk_pk_..."
+    /// )
     /// ```
     public static func configure(baseUrl: String, apiKey: String? = nil, debug: Bool = false, timeout: TimeInterval = 5.0, readClipboard: Bool = true) {
         config = FlinkuConfig(baseUrl: baseUrl, apiKey: apiKey, debug: debug, timeout: timeout, readClipboard: readClipboard)
+        if let apiKey = apiKey,
+           apiKey.hasPrefix("flk_live_"),
+           !secretKeyWarningShown {
+            secretKeyWarningShown = true
+            #if DEBUG
+            print(
+                "FLINKU WARNING: You are embedding a secret key (flk_live_) in your app. " +
+                "Anyone can extract it and gain full access to your links. " +
+                "Use your publishable key (flk_pk_) instead — find it in your project settings at app.flinku.dev."
+            )
+            #endif
+        }
     }
 
     /// Returns true if match() has already found a match.
@@ -112,7 +131,9 @@ public class Flinku {
                 return
             }
             guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-                DispatchQueue.main.async { completion(.failure(FlinkuError.invalidResponse)) }
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+                let message = linkCreationErrorMessage(data: data, statusCode: statusCode)
+                DispatchQueue.main.async { completion(.failure(FlinkuError.linkCreationFailed(message))) }
                 return
             }
             guard let data = data,
@@ -187,7 +208,9 @@ public class Flinku {
                 return
             }
             guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-                DispatchQueue.main.async { completion(.failure(FlinkuError.invalidResponse)) }
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+                let message = linkCreationErrorMessage(data: data, statusCode: statusCode)
+                DispatchQueue.main.async { completion(.failure(FlinkuError.linkCreationFailed(message))) }
                 return
             }
             guard let data = data else {
@@ -258,15 +281,36 @@ public class Flinku {
         }
         request.httpBody = body
 
-        URLSession.shared.dataTask(with: request) { _, response, error in
-            if error != nil {
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                if config.debug {
+                    print("[Flinku] createLinkInstant background error: \(error.localizedDescription)")
+                }
                 return
             }
             if let httpResponse = response as? HTTPURLResponse,
                !(200...299).contains(httpResponse.statusCode) {
-                return
+                let message = linkCreationErrorMessage(data: data, statusCode: httpResponse.statusCode)
+                if config.debug {
+                    print("[Flinku] createLinkInstant background error: \(message)")
+                }
             }
         }.resume()
+    }
+
+    private static func linkCreationErrorMessage(data: Data?, statusCode: Int) -> String {
+        guard let data = data, !data.isEmpty else {
+            return "Failed to create link: HTTP \(statusCode)"
+        }
+        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            if let error = json["error"] as? String, !error.isEmpty {
+                return error
+            }
+            if let message = json["message"] as? String, !message.isEmpty {
+                return message
+            }
+        }
+        return String(data: data, encoding: .utf8) ?? "Failed to create link: HTTP \(statusCode)"
     }
 
     private static func persistMatchResult(_ result: FlinkuLink) {

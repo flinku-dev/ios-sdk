@@ -1,3 +1,5 @@
+## 0.3.3 - Support publishable API keys (flk_pk_). Debug-mode warning when a secret key is embedded. Surface Allowed Domains errors clearly.
+
 ## 0.3.2 - Add readClipboard option to configure(); clipboard read now happens after server match
 
 ## 0.3.1 - Add createLinkInstant for instant link creation without waiting for server
