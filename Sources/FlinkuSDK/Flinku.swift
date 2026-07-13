@@ -8,8 +8,22 @@ public class Flinku {
 
     private static var config: FlinkuConfig?
     private static var secretKeyWarningShown = false
+    private static var referralApiKeyWarningShown = false
     private static let matchedKey = "flinku_matched"
     private static let matchResultKey = "flinku_match_result"
+    private static let userIdKey = "flinku_user_id"
+    /// Survives `reset()`. Used by qualify after the pending referral is cleared.
+    private static let referralProjectIdKey = "flinku_referral_project_id"
+    private static let pendingReferralKeyPrefix = "flinku_pending_referral_"
+    private static let pendingReferralTTL: TimeInterval = 30 * 24 * 60 * 60
+
+    private static func referralTrackedKey(_ projectId: String, _ userId: String) -> String {
+        "referral_tracked_\(projectId)_\(userId)"
+    }
+
+    private static func pendingReferralKey(_ projectId: String) -> String {
+        "\(pendingReferralKeyPrefix)\(projectId)"
+    }
 
     /// Configure Flinku with your project subdomain URL.
     /// Call once in AppDelegate or App struct before any match() call.
@@ -37,6 +51,12 @@ public class Flinku {
                 "Use your publishable key (flk_pk_) instead — find it in your project settings at app.flinku.dev."
             )
             #endif
+        }
+        // Retry a pending referral track if a userId was already stored (e.g. app relaunch).
+        if let userId = UserDefaults.standard.string(forKey: userIdKey)?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !userId.isEmpty {
+            trackReferralInBackground(userId: userId)
         }
     }
 
@@ -240,7 +260,45 @@ public class Flinku {
         }.resume()
     }
 
-    /// Reset stored match result. Use only during development/testing.
+    /// Stores userId locally and tracks a pending referral in the background.
+    ///
+    /// Returns immediately. Network work never blocks or throws to the caller.
+    /// Reads the dedicated pending-referral record written at match time (not the
+    /// match cache), so `reset()` cannot drop attribution.
+    /// Tracks at most once per project+user (`referral_tracked_{projectId}_{userId}`).
+    /// Requires `apiKey` in `configure`; otherwise logs a one-time warning and skips.
+    public static func setUserId(_ userId: String) {
+        let id = userId.trimmingCharacters(in: .whitespacesAndNewlines)
+        if id.isEmpty { return }
+        warnMissingReferralApiKeyOnce()
+        UserDefaults.standard.set(id, forKey: userIdKey)
+        trackReferralInBackground(userId: id)
+    }
+
+    /// Marks the stored user as a qualified referral for an optional event.
+    ///
+    /// No-op if `setUserId` has not been called. Returns immediately.
+    /// Requires `apiKey` in `configure`; otherwise logs a one-time warning and skips.
+    public static func qualifyReferral(_ event: String? = nil) {
+        warnMissingReferralApiKeyOnce()
+        qualifyReferralInBackground(event: event)
+    }
+
+    private static func hasReferralApiKey() -> Bool {
+        guard let apiKey = config?.apiKey?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+            return false
+        }
+        return !apiKey.isEmpty
+    }
+
+    private static func warnMissingReferralApiKeyOnce() {
+        if hasReferralApiKey() || referralApiKeyWarningShown { return }
+        referralApiKeyWarningShown = true
+        print("[Flinku] Referral tracking skipped: no apiKey configured. Pass apiKey: 'flk_pk_...' to Flinku.configure().")
+    }
+
+    /// Clears the cached match result so the next `match()` can hit the network again.
+    /// Does **not** clear pending referral attribution or the stored user id.
     public static func reset() {
         UserDefaults.standard.removeObject(forKey: matchedKey)
         UserDefaults.standard.removeObject(forKey: matchResultKey)
@@ -258,6 +316,216 @@ public class Flinku {
         let chars = Array("abcdefghijklmnopqrstuvwxyz0123456789")
         let suffix = String((0..<4).compactMap { _ in chars.randomElement() })
         return "\(base)-\(suffix)"
+    }
+
+    /// Writes `flinku_pending_referral_{projectId}` when the match has a referrerId.
+    /// Independent of the match cache so it survives `reset()`.
+    private static func persistPendingReferralIfNeeded(from result: FlinkuLink) {
+        guard result.matched else { return }
+        let projectId = (result.projectId ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !projectId.isEmpty else { return }
+
+        guard let params = result.params else { return }
+        let referrerRaw = params["referrerId"] ?? params["referrer_id"]
+        let referrerId = referrerRaw.map { "\($0)".trimmingCharacters(in: .whitespacesAndNewlines) }
+            .flatMap { $0.isEmpty ? nil : $0 }
+        guard let referrerId = referrerId else { return }
+
+        let labelRaw = params["referrerLabel"] ?? params["referrer_label"]
+        let referrerLabel = labelRaw.map { "\($0)".trimmingCharacters(in: .whitespacesAndNewlines) }
+            .flatMap { $0.isEmpty ? nil : $0 }
+
+        var linkId: String?
+        if let raw = result.linkId?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty {
+            linkId = raw
+        } else if let raw = result.slug?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty {
+            linkId = raw
+        }
+
+        var value: [String: Any] = [
+            "referrerId": referrerId,
+            "matchedAt": Date().timeIntervalSince1970,
+        ]
+        if let referrerLabel = referrerLabel {
+            value["referrerLabel"] = referrerLabel
+        }
+        if let linkId = linkId {
+            value["linkId"] = linkId
+        }
+
+        guard let data = try? JSONSerialization.data(withJSONObject: value) else { return }
+        let defaults = UserDefaults.standard
+        defaults.set(data, forKey: pendingReferralKey(projectId))
+        defaults.set(projectId, forKey: referralProjectIdKey)
+    }
+
+    private static func loadPendingReferral() -> (projectId: String, payload: [String: Any])? {
+        let defaults = UserDefaults.standard
+        let allKeys = defaults.dictionaryRepresentation().keys
+        for key in allKeys where key.hasPrefix(pendingReferralKeyPrefix) {
+            let projectId = String(key.dropFirst(pendingReferralKeyPrefix.count))
+            guard !projectId.isEmpty,
+                  let data = defaults.data(forKey: key),
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                continue
+            }
+
+            let matchedAt: TimeInterval
+            if let n = json["matchedAt"] as? TimeInterval {
+                matchedAt = n
+            } else if let n = json["matchedAt"] as? NSNumber {
+                matchedAt = n.doubleValue
+            } else {
+                defaults.removeObject(forKey: key)
+                continue
+            }
+
+            if Date().timeIntervalSince1970 - matchedAt > pendingReferralTTL {
+                defaults.removeObject(forKey: key)
+                continue
+            }
+
+            let referrerId = (json["referrerId"] as? String)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            guard !referrerId.isEmpty else {
+                defaults.removeObject(forKey: key)
+                continue
+            }
+
+            return (projectId, json)
+        }
+        return nil
+    }
+
+    private static func clearPendingReferral(projectId: String) {
+        UserDefaults.standard.removeObject(forKey: pendingReferralKey(projectId))
+    }
+
+    private static func trackReferralInBackground(userId: String) {
+        guard let config = config, hasReferralApiKey() else { return }
+        guard let pending = loadPendingReferral() else { return }
+        let projectId = pending.projectId
+        let json = pending.payload
+
+        let trackedKey = referralTrackedKey(projectId, userId)
+        if UserDefaults.standard.bool(forKey: trackedKey) {
+            clearPendingReferral(projectId: projectId)
+            return
+        }
+
+        let referrerId = (json["referrerId"] as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !referrerId.isEmpty else {
+            clearPendingReferral(projectId: projectId)
+            return
+        }
+
+        let referrerLabel = (json["referrerLabel"] as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let referrerLabelValue = (referrerLabel?.isEmpty == false) ? referrerLabel : nil
+        let linkIdRaw = (json["linkId"] as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let linkId = (linkIdRaw?.isEmpty == false) ? linkIdRaw : nil
+
+        var body: [String: Any] = [
+            "projectId": projectId,
+            "referrerId": referrerId,
+            "newUserId": userId,
+        ]
+        if let referrerLabelValue = referrerLabelValue {
+            body["referrerLabel"] = referrerLabelValue
+        }
+        if let linkId = linkId {
+            body["linkId"] = linkId
+        }
+
+        UserDefaults.standard.set(projectId, forKey: referralProjectIdKey)
+
+        postReferralInBackground(
+            path: "/api/referrals/track",
+            body: body,
+            config: config
+        ) { success in
+            guard success else { return }
+            UserDefaults.standard.set(true, forKey: trackedKey)
+            clearPendingReferral(projectId: projectId)
+        }
+    }
+
+    private static func qualifyReferralInBackground(event: String?) {
+        guard let config = config, hasReferralApiKey() else { return }
+        guard let userId = UserDefaults.standard.string(forKey: userIdKey)?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+              !userId.isEmpty else {
+            return
+        }
+
+        var projectId = UserDefaults.standard.string(forKey: referralProjectIdKey)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if projectId.isEmpty, let pending = loadPendingReferral() {
+            projectId = pending.projectId
+        }
+        // Fall back to match cache only if pending/project keys are absent.
+        if projectId.isEmpty,
+           let data = UserDefaults.standard.data(forKey: matchResultKey),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let fromMatch = (json["projectId"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !fromMatch.isEmpty {
+            projectId = fromMatch
+        }
+        guard !projectId.isEmpty else { return }
+
+        var body: [String: Any] = [
+            "projectId": projectId,
+            "newUserId": userId,
+        ]
+        if let event = event?.trimmingCharacters(in: .whitespacesAndNewlines), !event.isEmpty {
+            body["event"] = event
+        }
+
+        postReferralInBackground(path: "/api/referrals/qualify", body: body, config: config)
+    }
+
+    private static func postReferralInBackground(
+        path: String,
+        body: [String: Any],
+        config: FlinkuConfig,
+        onComplete: ((Bool) -> Void)? = nil
+    ) {
+        guard let url = URL(string: "\(config.apiBaseUrl)\(path)") else {
+            onComplete?(false)
+            return
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        guard let apiKey = config.apiKey, !apiKey.isEmpty else {
+            onComplete?(false)
+            return
+        }
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = config.timeout
+        guard let httpBody = try? JSONSerialization.data(withJSONObject: body) else {
+            onComplete?(false)
+            return
+        }
+        request.httpBody = httpBody
+
+        URLSession.shared.dataTask(with: request) { _, response, error in
+            if let error = error {
+                if config.debug {
+                    print("[Flinku] referral \(path) error: \(error.localizedDescription)")
+                }
+                onComplete?(false)
+                return
+            }
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            let ok = (200...299).contains(status)
+            if !ok, config.debug {
+                print("[Flinku] referral \(path) error: HTTP \(status)")
+            }
+            onComplete?(ok)
+        }.resume()
     }
 
     private static func createLinkInstantInBackground(
@@ -316,7 +584,7 @@ public class Flinku {
     private static func persistMatchResult(_ result: FlinkuLink) {
         guard result.matched else { return }
         UserDefaults.standard.set(true, forKey: matchedKey)
-        if let json = try? JSONSerialization.data(withJSONObject: [
+        var payload: [String: Any] = [
             "matched": true,
             "deepLink": result.deepLink ?? "",
             "slug": result.slug ?? "",
@@ -325,8 +593,14 @@ public class Flinku {
             "params": result.params ?? [:],
             "projectId": result.projectId ?? "",
             "matchType": result.matchType ?? "",
-        ]) {
+        ]
+        if let linkId = result.linkId, !linkId.isEmpty {
+            payload["linkId"] = linkId
+        }
+        if let json = try? JSONSerialization.data(withJSONObject: payload) {
             UserDefaults.standard.set(json, forKey: matchResultKey)
         }
+        // Dedicated attribution record — survives reset().
+        persistPendingReferralIfNeeded(from: result)
     }
 }

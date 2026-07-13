@@ -2,7 +2,7 @@
 
 Official iOS SDK for [Flinku](https://flinku.dev) — deferred deep linking for iOS. The modern replacement for Firebase Dynamic Links.
 
-**Version 0.3.3**
+**Version 0.6.0**
 
 ## Installation
 
@@ -114,10 +114,24 @@ Flinku.createLinks([opts, FlinkuLinkOptions(title: "Other")]) { result in
 
 Create calls use `apiBaseUrl` (apex host from your `baseUrl`, e.g. `https://flku.dev`) at `POST /api/links` and `POST /api/links/batch`.
 
+## Referrals
+
+```swift
+Flinku.configure(
+    baseUrl: "https://yourapp.flku.dev",
+    apiKey: "flk_pk_..."   // required for referrals
+)
+
+Flinku.setUserId(user.id)            // after signup or login
+Flinku.qualifyReferral("purchase")   // when the referred user does the thing you reward
+```
+
+`Flinku.reset()` clears the match cache only. It does **not** clear pending referral attribution, so calling `reset()` after routing a deep link is safe.
+
 ## Reset (testing only)
 
 ```swift
-Flinku.reset()
+Flinku.reset() // clears match cache only; referral attribution is preserved
 ```
 
 ## Requirements

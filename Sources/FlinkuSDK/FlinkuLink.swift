@@ -10,6 +10,8 @@ public struct FlinkuLink {
     public let clickedAt: Date?
     public let projectId: String?
     public let matchType: String?
+    /// Matched link document id from `/api/match` when the server returns it.
+    public let linkId: String?
 
     public static let notMatched = FlinkuLink(
         matched: false,
@@ -20,7 +22,8 @@ public struct FlinkuLink {
         params: nil,
         clickedAt: nil,
         projectId: nil,
-        matchType: nil
+        matchType: nil,
+        linkId: nil
     )
 
     static func from(json: [String: Any]) -> FlinkuLink {
@@ -30,6 +33,9 @@ public struct FlinkuLink {
             let formatter = ISO8601DateFormatter()
             clickedAt = formatter.date(from: clickedAtStr)
         }
+        let linkIdRaw = json["linkId"] ?? json["id"]
+        let linkId = linkIdRaw.map { "\($0)".trimmingCharacters(in: .whitespacesAndNewlines) }
+            .flatMap { $0.isEmpty ? nil : $0 }
         return FlinkuLink(
             matched: matched,
             deepLink: json["deepLink"] as? String,
@@ -39,7 +45,8 @@ public struct FlinkuLink {
             params: json["params"] as? [String: Any],
             clickedAt: clickedAt,
             projectId: json["projectId"] as? String,
-            matchType: json["matchType"] as? String
+            matchType: json["matchType"] as? String,
+            linkId: linkId
         )
     }
 }

@@ -1,3 +1,21 @@
+## 0.6.0
+
+* Pending referral attribution is stored separately from the match cache (`flinku_pending_referral_{projectId}`)
+* `Flinku.reset()` no longer clears referral attribution
+* Failed track POSTs leave the pending record in place and retry on the next `setUserId` or `configure` (when a userId is already stored)
+* Pending referrals expire after 30 days
+
+## 0.5.0
+
+* Referral once-per-user flag is now `referral_tracked_{projectId}_{userId}`
+* Persist and send `linkId` from the match response when tracking referrals
+* README Referrals section documents `apiKey` on `configure`
+
+## 0.4.0
+
+* `Flinku.setUserId` — store app user id and auto-track referrals from cached match `referrerId`
+* `Flinku.qualifyReferral` — mark a referred user as qualified for an optional event
+
 ## 0.3.3 - Support publishable API keys (flk_pk_). Debug-mode warning when a secret key is embedded. Surface Allowed Domains errors clearly.
 
 ## 0.3.2 - Add readClipboard option to configure(); clipboard read now happens after server match
