@@ -1,3 +1,8 @@
+## 0.7.0 — 2026-07-21
+
+* `Flinku.resetAll()` — testing-only full local wipe (match cache, user id, pending referral, tracked-once flags). Does not change `reset()` behaviour.
+* Pending referral index entry is removed when a pending referral record expires by TTL.
+
 ## 0.6.0
 
 * Pending referral attribution is stored separately from the match cache (`flinku_pending_referral_{projectId}`)
